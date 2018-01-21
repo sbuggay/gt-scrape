@@ -1,9 +1,9 @@
-import * as cheerio from "cheerio";
-import * as rp from "request-promise";
-import * as fs from "fs";
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const cheerio = require("cheerio");
+const rp = require("request-promise");
+const fs = require("fs");
 const json2csv = require("json2csv");
-
 // The mapping order and positions
 const mapping = [
     "rank",
@@ -15,17 +15,12 @@ const mapping = [
     "ip",
     "map"
 ];
-
-
 // Transform a row into an object
-function transform(data: string[]) {
-
+function transform(data) {
     if (data.length !== 8) {
         return {};
     }
-
-    const obj: { [key: string]: any } = {};
-
+    const obj = {};
     data.forEach((d, i) => {
         if (mapping[i]) {
             switch (mapping[i]) {
@@ -34,52 +29,47 @@ function transform(data: string[]) {
             }
         }
     });
-
     return obj;
 }
-
-const data: any[] = [];
-
-function scrape(): Promise<any> {
-
-    //return new Promise((resolve, reject) => {
-        function recurse(url: string, host: string = "https://www.gametracker.com"): any {
-
+const data = [];
+function scrape() {
+    return new Promise((resolve, reject) => {
+        function recurse(url, host = "https://www.gametracker.com") {
             let scrapping = true;
-
-            console.log(host + url);
-
             const options = {
                 uri: host + url,
-                transform: (body: any) => cheerio.load(body),
+                transform: (body) => cheerio.load(body),
                 headers: {
                     "User-Agent": "request"
                 }
             };
-
-            return rp(options).then($ => {
+            rp(options).then($ => {
                 const nextLink = $("a:contains('NEXT')").attr("href");
-                $("tr").each((i: number, el: any) => {
-                    const row: any[] = [];
-                    $(el).find("td").each((i: number, td: any) => {
+                $("tr").each((i, el) => {
+                    const row = [];
+                    $(el).find("td").each((i, td) => {
                         row.push($(td).text().replace(/\n?\t?/g, ""));
                     });
                     data.push(transform(row));
                 });
-
                 if (nextLink) {
                     // Recurse, note that this isn't true recursion. As the call stack gets broken up by the promise message queue.
-                    return recurse(nextLink);
+                    recurse(nextLink);
                 }
+                else {
+                    resolve(data);
+                }
+            }).catch(error => {
+                console.error(error);
+                reject(error);
             });
-        //}
-    };
-
-    return recurse("/search/cs/?searchipp=50&sort=0&order=ASC");
+        }
+        recurse("/search/cs/US/?searchipp=50#search");
+    });
 }
-
 scrape().then(result => {
     const fields = ["rank", "name", "players", "ip", "map"];
     const csv = json2csv({ data: result, fields: fields });
     fs.writeFileSync("out.csv", csv);
 });
+//# sourceMappingURL=main.js.map

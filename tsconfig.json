@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "module": "none",
+        "target": "es2016",
+        "noImplicitAny": true,
+        "strict": true,
+        "preserveConstEnums": true,
+        "outDir": "./bin",
+        "sourceMap": true,
+        "moduleResolution": "node"
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ]
+}
